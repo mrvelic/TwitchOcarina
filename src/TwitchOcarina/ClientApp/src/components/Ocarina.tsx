@@ -97,7 +97,7 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
         // Right = A
         // Left = B
 
-        var timePerNoteSection = 0.2;
+        var timePerNoteSection = 0.3;
         var attackTime = Tone.now();
         var notes: OcarinaNote[] = [];
         var currentNoteLetters: string[] = [];
