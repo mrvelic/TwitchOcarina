@@ -7,7 +7,8 @@ import * as _ from 'lodash';
 type OcarinaRouteParams = { channelName: string, botName: string, authToken: string };
 type OcarinaState = { isLoading: boolean; testValue: string, showTestUI: boolean };
 
-type OcarinaNote = { note: string[]; attackTime: Tone.Unit.Time; noteLength: number; }
+type OcarinaPitchOctave = { pitch: string; octave: number; sharp?: boolean; flat?: boolean; };
+type OcarinaNote = { note: OcarinaPitchOctave[]; attackTime: Tone.Unit.Time; noteLength: number; }
 
 export default class Ocarina extends React.Component<RouteComponentProps<OcarinaRouteParams>, OcarinaState> {
     static displayName = Ocarina.name;
@@ -54,11 +55,11 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
 
         self.synth = new Tone.Sampler({
             urls: {
-                "A0": "A.wav",
-                "B0": "B.wav",
-                "D0": "D.wav",
-                "D2": "D2.wav",
-                "F0": "F.wav"
+                "A4": "A.wav",
+                "B4": "B.wav",
+                "D4": "D.wav",
+                "D5": "D2.wav",
+                "F4": "F.wav"
             },
             release: 0.4,
             baseUrl: "/notes/",
@@ -100,7 +101,7 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
         var timePerNoteSection = 0.3;
         var attackTime = Tone.now();
         var notes: OcarinaNote[] = [];
-        var currentNoteLetters: string[] = [];
+        var currentNoteLetters: OcarinaPitchOctave[] = [];
         var currentNote: OcarinaNote | null = null;
         var tildeCount = 0;
         var buildingChord = false;
@@ -117,23 +118,23 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                     pushNote = true;
                     break;
                 case '^':
-                    currentNoteLetters.push('D2');
+                    currentNoteLetters.push({ pitch: 'D', octave: 5 });
                     pushNote = true;
                     break;
                 case '<':
-                    currentNoteLetters.push('B0');
+                    currentNoteLetters.push({ pitch: 'B', octave: 4 });
                     pushNote = true;
                     break;
                 case '>':
-                    currentNoteLetters.push('A0');
+                    currentNoteLetters.push({ pitch: 'A', octave: 4 });
                     pushNote = true;
                     break;
                 case 'v':
-                    currentNoteLetters.push('F0');
+                    currentNoteLetters.push({ pitch: 'F', octave: 4 });
                     pushNote = true;
                     break;
                 case 'a':
-                    currentNoteLetters.push('D0');
+                    currentNoteLetters.push({ pitch: 'D', octave: 4 });
                     pushNote = true;
                     break;
                 case ' ':
@@ -153,14 +154,42 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                             tildeCount = 0;
                         }
                     }
-
                     break;
                 case '/':
                     if (currentNote) {
                         currentNote.noteLength -= 0.08;
                         attackTime -= 0.08;
                     }
-
+                    break;
+                case '+':
+                    var lastNote = _.last(currentNote?.note);
+                    if (lastNote) {
+                        lastNote.octave += 1;
+                        if (lastNote.octave > 7) {
+                            lastNote.octave = 7;
+                        }
+                    }
+                    break;
+                case '-':
+                    var lastNote = _.last(currentNote?.note);
+                    if (lastNote) {
+                        lastNote.octave -= 1;
+                        if (lastNote.octave < 0) {
+                            lastNote.octave = 0;
+                        }
+                    }
+                    break;
+                case '#':
+                    var lastNote = _.last(currentNote?.note);
+                    if (lastNote) {
+                        lastNote.sharp = true;
+                    }
+                    break;
+                case 'b':
+                    var lastNote = _.last(currentNote?.note);
+                    if (lastNote) {
+                        lastNote.flat = true;
+                    }
                     break;
             }
 
@@ -184,7 +213,9 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
 
         notes.forEach(note => {
             if (note.note.length > 0) {
-                synth.triggerAttackRelease(note.note, note.noteLength, note.attackTime);
+                let playbackNotes = _.map(note.note, n => `${n.pitch}${n.sharp ? '#' : ''}${n.flat ? 'b' : ''}${n.octave}`);
+
+                synth.triggerAttackRelease(playbackNotes, note.noteLength, note.attackTime);
             }
         });
     }
@@ -218,6 +249,10 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                 <ul>
                     <li><strong>~</strong> make note longer</li>
                     <li><strong>/</strong> make note shorter</li>
+                    <li><strong>#</strong> make note sharp</li>
+                    <li><strong>b</strong> make note flat</li>
+                    <li><strong>+</strong> increase note octave</li>
+                    <li><strong>-</strong> decreate note octave</li>
                     <li><strong>space</strong> introduce a pause (can be modified with ~ and /)</li>
                     <li><strong>[notes]</strong> build a chord (can be modified with ~ and / after the ])</li>
                 </ul>
