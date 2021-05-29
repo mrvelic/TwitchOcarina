@@ -78,7 +78,7 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
         if (this.state.isLoading) return;
 
         if (msg.toLowerCase() === "!ocarina") {
-            this.twitchClient.say(channel, "Usage: !ocarina notes (^ v < > A) (eg: !ocarina ^vA~ ^vA~) | Use ~ to lengthen a note. Use / to shorten a note. Use [] to build chords. Use a space for a pause. Input is case-insensitive.");
+            this.twitchClient.say(channel, "Usage: !ocarina notes (^ v < > A) (eg: !ocarina ^vA~ ^vA~) | Note Modifiers: ~ lengthen, / shorten, # sharp, b flat, [notes] chord, + increase octave, - decrease octave, space is a pause. Input is case-insensitive.");
             return;
         }
 
@@ -108,6 +108,7 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
 
         for (var i = 0; i < noteText.length; i++) {
             var pushNote = false;
+            var lastNote = _.last(currentNote?.note);
 
             switch (noteText[i]) {
                 case '[':
@@ -162,7 +163,6 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                     }
                     break;
                 case '+':
-                    var lastNote = _.last(currentNote?.note);
                     if (lastNote) {
                         lastNote.octave += 1;
                         if (lastNote.octave > 7) {
@@ -171,7 +171,6 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                     }
                     break;
                 case '-':
-                    var lastNote = _.last(currentNote?.note);
                     if (lastNote) {
                         lastNote.octave -= 1;
                         if (lastNote.octave < 0) {
@@ -180,13 +179,11 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                     }
                     break;
                 case '#':
-                    var lastNote = _.last(currentNote?.note);
                     if (lastNote) {
                         lastNote.sharp = true;
                     }
                     break;
                 case 'b':
-                    var lastNote = _.last(currentNote?.note);
                     if (lastNote) {
                         lastNote.flat = true;
                     }
