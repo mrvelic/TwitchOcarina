@@ -181,11 +181,13 @@ export default class Ocarina extends React.Component<RouteComponentProps<Ocarina
                 case '#':
                     if (lastNote) {
                         lastNote.sharp = true;
+                        if (lastNote.flat) lastNote.flat = false;
                     }
                     break;
                 case 'b':
                     if (lastNote) {
                         lastNote.flat = true;
+                        if (lastNote.sharp) lastNote.sharp = false;
                     }
                     break;
             }
